@@ -116,7 +116,10 @@ class GetAnswerToFullQuestion(Resource):
         if len(cs101.search_feed(query)) == 0:
             return "Couldn't find a matching questions on Piazza"
         id_str = search_feed_result[0]["id"]
-        return cleanhtml(cs101.get_post(id_str)["children"][0]["history"][0]["content"])
+        child_history_array = cs101.get_post(id_str)["children"]
+        if len(child_history_array) == 0:
+            return "This question has no answers"
+        return cleanhtml(child_history_array[0]["history"][0]["content"])
 
 class PiazzaPost(Resource):
     args = {'query': fields.Str(required=True)}
