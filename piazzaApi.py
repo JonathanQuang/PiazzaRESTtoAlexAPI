@@ -1,9 +1,30 @@
+from piazza_api.rpc import PiazzaRPC
 from piazza_api import Piazza
-p = Piazza()
-p.user_login("dhruva.bansal00@gmail.com", "DhrBan002k")
-cs101 = p.network("k26wh1bxb6imp")
-posts = cs101.iter_all_posts(limit=10)
-for post in posts:
-	print(post)
-all_users = cs101.get_all_users()
-print(all_users)
+from flask import Flask
+from flask_restful import Resource, Api
+from flask import jsonify
+
+
+app = Flask(__name__)
+api = Api(app)
+
+post = PiazzaRPC("k26wh1bxb6imp")
+post.user_login("jquang1000@gmail.com", "hackgtdummy")
+
+get = Piazza()
+get.user_login("jquang1000@gmail.com", "hackgtdummy")
+cs101 = get.network("k26wh1bxb6imp")
+class HelloWorld(Resource):
+	def get(self):
+		allPosts = {}
+		posts = cs101.iter_all_posts(limit=10)
+		index = 0
+		for p in posts:
+		    allPosts[index] = p
+		    index = index + 1
+		return jsonify(allPosts)
+
+api.add_resource(HelloWorld, '/')
+
+if __name__ == '__main__':
+	app.run(debug = True)
