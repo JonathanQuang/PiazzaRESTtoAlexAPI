@@ -12,7 +12,7 @@ get = Piazza()
 get.user_login("jquang1000@gmail.com", "hackgtdummy")
 cs101 = get.network("k26wh1bxb6imp")
 
-class HelloWorld(Resource):
+class Post(Resource):
 	def get(self):
 		allPosts = {}
 		posts = cs101.iter_all_posts(limit=10)
@@ -32,8 +32,15 @@ class HelloWorld(Resource):
 		    index = index + 1
 		return jsonify(allPosts)
 
+	
 
-api.add_resource(HelloWorld, '/')
+class Search(Resource):
+	def get(self):
+		return jsonify(cs101.search_feed("job"))
+
+api.add_resource(Post, '/post/')
+api.add_resource(Search, '/search/')
+
 
 if __name__ == '__main__':
 	app.run(debug = True)
