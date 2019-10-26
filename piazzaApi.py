@@ -56,6 +56,13 @@ class Search(Resource):
 	def get(self, query):
 		return jsonify(cs101.search_feed(query))
 
+class PiazzaPost(Resource):
+    args = {'query' : fields.Str(required=True)}
+    @use_kwargs(args)
+    def get(self, query):
+        return jsonify(cs101.get_post(query))
+
+
 class EnterRoom(Resource):
 	args = {
 		'id': fields.Str(
@@ -89,6 +96,7 @@ class ExitRoom(Resource):
 
 api.add_resource(Post, '/post/')
 api.add_resource(Search, '/search/')
+api.add_resource(PiazzaPost,'/piazzaPost/')
 api.add_resource(EnterRoom, '/enterRoom/')
 api.add_resource(ExitRoom, '/exitRoom/')
 
