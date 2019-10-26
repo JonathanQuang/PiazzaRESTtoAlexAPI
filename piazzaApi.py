@@ -71,13 +71,18 @@ class FirstQuestionId(Resource):
         return firstQuestion["id"]
 
 class GetFullQuestion(Resource):
-    args = {'query' : fields.Str(required = True)}
+    args = {'query' : fields.Str(required = True),
+            'userID' : fields.Str(required = True)}
     @use_kwargs(args)
-    def get(self, query):
+    def get(self, query, userID):
         if len(cs101.search_feed(query)) == 0:
-            return ["Couldn't find a matching question on Piazza", ""]
+            return "Couldn't find a matching question on Piazza"
         id_str = cs101.search_feed(query)[0]["id"]
-        return [cleanhtml(cs101.get_post(id_str)["history"][0]["content"]), id_str]
+        if mongo.db.questions.find_one({userID : {"$exists": True}}) is not None:
+            print(mongo.db.questions.find_one({userID : {"$exists": True}}))
+            mongo.db.questions.delete_one({userID : {"$exists": True}})
+        mongo.db.questions.insert_one({userID : id_str})
+        return cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
 
 class PiazzaPost(Resource):
     args = {'query' : fields.Str(required=True)}
@@ -86,9 +91,10 @@ class PiazzaPost(Resource):
         return jsonify(cs101.get_post(query))
 
 class GetPiazzaAnswer(Resource):
-    args = {'questionID' : fields.Str(required=True)}
+    args = {'userID' : fields.Str(required=True)}
     @use_kwargs(args)
-    def get(self, questionID):
+    def get(self, userID):
+        questionID = mongo.db.questions.find_one({userID : {"$exists": True}})[userID]
         if len(cs101.get_post(questionID)["children"]) == 0:
             return "There is no answer for this question on Piazza"
         return cleanhtml(cs101.get_post(questionID)["children"][0]["history"][0]["content"])
