@@ -7,6 +7,7 @@ from webargs import fields, validate
 from webargs.flaskparser import use_kwargs, parser
 from flask_pymongo import PyMongo
 import re
+import requests
 
 
 app = Flask(__name__)
@@ -38,10 +39,13 @@ class Post(Resource):
         'question': fields.Str(
             required=True,
         ),
+        'description': fields.Str(
+            required=True,
+        ),
     }
     @use_kwargs(args)
-    def post(self, question):
-        cs101.create_post("question",['polls'], "CS 101", question)
+    def post(self, question, description):
+        cs101.create_post("question",['polls'], question, description)
         allPosts = {}
         posts = cs101.iter_all_posts(limit=10)
         index = 0
@@ -129,6 +133,14 @@ class ExitRoom(Resource):
         mongo.db.room.delete_one({"id" : id})
         return mongo.db.room.find_one({"id" : id}) is None
 
+class TestExternalAPI(Resource):
+    def get(self):
+        URL = "http://maps.googleapis.com/maps/api/geocode/json"
+        location = "delhi technological university"
+        PARAMS = {'address':location} 
+        r = requests.get(url = URL, params = PARAMS) 
+        return r.json() 
+
 
 
 api.add_resource(Post, '/post/')
@@ -139,6 +151,7 @@ api.add_resource(EnterRoom, '/enterRoom/')
 api.add_resource(ExitRoom, '/exitRoom/')
 api.add_resource(FirstQuestionId,'/firstQuestionId/')
 api.add_resource(GetFullQuestion,'/getFullQuestion/')
+api.add_resource(SendNotifications, '/callAPI/')
 
 
 if __name__ == '__main__':
