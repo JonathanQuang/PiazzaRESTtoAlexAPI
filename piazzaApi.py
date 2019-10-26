@@ -42,9 +42,12 @@ class Post(Resource):
         'description': fields.Str(
             required=True,
         ),
+        'id' : fields.Str(
+            required = True,
+        ),
     }
     @use_kwargs(args)
-    def post(self, question, description):
+    def post(self, question, description, id):
         cs101.create_post("question",['polls'], question, description)
         allPosts = {}
         posts = cs101.iter_all_posts(limit=10)
@@ -52,6 +55,8 @@ class Post(Resource):
         for p in posts:
             allPosts[index] = p
             index = index + 1
+        mydict = {"question" : question , "id" : id}
+        mongo.db.question_id_map.insert_one(mydict)
         return jsonify(allPosts)
 
     
@@ -151,7 +156,6 @@ api.add_resource(EnterRoom, '/enterRoom/')
 api.add_resource(ExitRoom, '/exitRoom/')
 api.add_resource(FirstQuestionId,'/firstQuestionId/')
 api.add_resource(GetFullQuestion,'/getFullQuestion/')
-api.add_resource(SendNotifications, '/callAPI/')
 
 
 if __name__ == '__main__':
