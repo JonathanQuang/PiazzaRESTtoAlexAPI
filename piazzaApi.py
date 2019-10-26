@@ -143,7 +143,9 @@ class EnterRoom(Resource):
     def post(self, id, room):
         if mongo.db.room.find_one({"id": id}) is None:
             mongo.db.room.insert_one({"id": id})
-        return mongo.db.room.find_one({"id": id}) != None
+            return "Added you into the room"
+        else:
+            return "You are already in the room"
 
 
 class ExitRoom(Resource):
@@ -158,16 +160,32 @@ class ExitRoom(Resource):
 
     @use_kwargs(args)
     def post(self, id, room):
-        mongo.db.room.delete_one({"id": id})
-        return mongo.db.room.find_one({"id": id}) is None
+        if mongo.db.room.find_one({"id": id}) is None:
+            return "You are not in this room"
+        else:
+            mongo.db.room.delete_one({"id": id})
+            return "Removed you from the room"
 
 
-class TestExternalAPI(Resource):
-    def get(self):
+class SendNotifications(Resource):
+    args = {
+        'dont_send_id': fields.Str(
+            required=True,
+        ),
+        'room': fields.Str(
+            required=True,
+        ),
+    }
+    @use_kwargs(args)
+    def post(self, dont_send_id, room):
         token = getToken()
-        sendNotification(token, "haha suck it", [
-                         "amzn1.ask.account.AG2TZLYN7IIPVACJDVUY4RLSM4GUIGYPDIKBPZ6XII5B656US4WMOINZ4J3KCJEONSNZGHRVZ2V4WJXF63BWEKS5O3UFAIHHL4R2N47PCFPSK3CB4UI4J43NUPG53OTBATDXKISCHJ7STQ26ALRD5XRYO3ZYCHTHUU6WIFCLRN4TVAIMU23GDXAMR4SNMCFNJTIVGQ3L2GIPAKQ"])
-        return 'dead'
+        cursor = mongo.db.room.find( {} )
+        sendNotificationIDs = []
+        for doc in cursor:
+            if not (doc["id"] == dont_send_id):
+                sendNotificationIDs.append(doc["id"])
+        sendNotification(token, "haha suck it", sendNotificationIDs)
+        return "Notifications Sent"
 
 
 def getToken():
@@ -233,7 +251,7 @@ api.add_resource(EnterRoom, '/enterRoom/')
 api.add_resource(ExitRoom, '/exitRoom/')
 api.add_resource(FirstQuestionId, '/firstQuestionId/')
 api.add_resource(GetFullQuestion, '/getFullQuestion/')
-api.add_resource(TestExternalAPI, '/callAPI/')
+api.add_resource(SendNotifications, '/notify/')
 
 
 if __name__ == '__main__':
