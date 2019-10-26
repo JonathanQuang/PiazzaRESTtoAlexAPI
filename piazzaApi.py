@@ -108,6 +108,15 @@ class GetFullQuestion(Resource):
         mongo.db.questions.insert_one({userID: id_str})
         return cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
 
+class GetAnswerToFullQuestion(Resource):
+    args = {'query' : fields.Str(required = True)} 
+    @use_kwargs(args)
+    def get(self, query):
+        search_feed_result = cs101.search_feed(query)
+        if len(cs101.search_feed(query)) == 0:
+            return "Couldn't find a matching questions on Piazza"
+        id_str = search_feed_result[0]["id"]
+        return cleanhtml(cs101.get_post(id_str)["children"][0]["history"][0]["content"])
 
 class PiazzaPost(Resource):
     args = {'query': fields.Str(required=True)}
@@ -252,7 +261,5 @@ api.add_resource(ExitRoom, '/exitRoom/')
 api.add_resource(FirstQuestionId, '/firstQuestionId/')
 api.add_resource(GetFullQuestion, '/getFullQuestion/')
 api.add_resource(SendNotifications, '/notify/')
-
-
 if __name__ == '__main__':
     app.run(debug=True)
