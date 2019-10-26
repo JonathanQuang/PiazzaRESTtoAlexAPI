@@ -25,42 +25,42 @@ def cleanhtml(raw_html):
   return cleantext
 
 class Post(Resource):
-	def get(self):
-		allPosts = {}
-		posts = cs101.iter_all_posts(limit=10)
-		index = 0
-		for p in posts:
-			allPosts[index] = p
-			index = index + 1
-		return jsonify(allPosts)
+    def get(self):
+        allPosts = {}
+        posts = cs101.iter_all_posts(limit=10)
+        index = 0
+        for p in posts:
+            allPosts[index] = p
+            index = index + 1
+        return jsonify(allPosts)
 
-	args = {
-		'question': fields.Str(
-			required=True,
-		),
-	}
-	@use_kwargs(args)
-	def post(self, question):
-		cs101.create_post("question",['polls'], "CS 101", question)
-		allPosts = {}
-		posts = cs101.iter_all_posts(limit=10)
-		index = 0
-		for p in posts:
-			allPosts[index] = p
-			index = index + 1
-		return jsonify(allPosts)
+    args = {
+        'question': fields.Str(
+            required=True,
+        ),
+    }
+    @use_kwargs(args)
+    def post(self, question):
+        cs101.create_post("question",['polls'], "CS 101", question)
+        allPosts = {}
+        posts = cs101.iter_all_posts(limit=10)
+        index = 0
+        for p in posts:
+            allPosts[index] = p
+            index = index + 1
+        return jsonify(allPosts)
 
-	
+    
 
 class Search(Resource):
-	args = {
-		'query': fields.Str(
-			required=True,
-		),
-	}
-	@use_kwargs(args)
-	def get(self, query):
-		return jsonify(cs101.search_feed(query))
+    args = {
+        'query': fields.Str(
+            required=True,
+        ),
+    }
+    @use_kwargs(args)
+    def get(self, query):
+        return jsonify(cs101.search_feed(query))
 
 class FirstQuestionId(Resource):
     args = {'query': fields.Str(required = True)}
@@ -74,52 +74,54 @@ class GetFullQuestion(Resource):
     args = {'query' : fields.Str(required = True)}
     @use_kwargs(args)
     def get(self, query):
+        if len(cs101.search_feed(query)) == 0:
+            return ["Couldn't find a matching question on Piazza", ""]
         id_str = cs101.search_feed(query)[0]["id"]
-        return cs101.get_post(id_str)["history"][0]["content"]
+        return [cleanhtml(cs101.get_post(id_str)["history"][0]["content"]), id_str]
 
 class PiazzaPost(Resource):
-	args = {'query' : fields.Str(required=True)}
-	@use_kwargs(args)
-	def get(self, query):
-		return jsonify(cs101.get_post(query))
+    args = {'query' : fields.Str(required=True)}
+    @use_kwargs(args)
+    def get(self, query):
+        return jsonify(cs101.get_post(query))
 
 class GetPiazzaAnswer(Resource):
-	args = {'questionID' : fields.Str(required=True)}
-	@use_kwargs(args)
-	def get(self, questionID):
-		if len(cs101.get_post(questionID)["children"]) == 0:
-			return "There is no answer for this question on Piazza"
-		return cleanhtml(cs101.get_post(questionID)["children"][0]["history"][0]["content"])
+    args = {'questionID' : fields.Str(required=True)}
+    @use_kwargs(args)
+    def get(self, questionID):
+        if len(cs101.get_post(questionID)["children"]) == 0:
+            return "There is no answer for this question on Piazza"
+        return cleanhtml(cs101.get_post(questionID)["children"][0]["history"][0]["content"])
 
 
 class EnterRoom(Resource):
-	args = {
-		'id': fields.Str(
-			required=True,
-		),
-		'room': fields.Str(
-			required=True,
-		),
-	}
-	@use_kwargs(args)
-	def post(self, id, room):
-		if mongo.db.room.find_one({"id" : id}) is None:
-			mongo.db.room.insert_one({"id" : id})
-		return mongo.db.room.find_one({"id" : id}) != None
+    args = {
+        'id': fields.Str(
+            required=True,
+        ),
+        'room': fields.Str(
+            required=True,
+        ),
+    }
+    @use_kwargs(args)
+    def post(self, id, room):
+        if mongo.db.room.find_one({"id" : id}) is None:
+            mongo.db.room.insert_one({"id" : id})
+        return mongo.db.room.find_one({"id" : id}) != None
 
 class ExitRoom(Resource):
-	args = {
-		'id': fields.Str(
-			required=True,
-		),
-		'room': fields.Str(
-			required=True,
-		),
-	}
-	@use_kwargs(args)
-	def post(self, id, room):
-		mongo.db.room.delete_one({"id" : id})
-		return mongo.db.room.find_one({"id" : id}) is None
+    args = {
+        'id': fields.Str(
+            required=True,
+        ),
+        'room': fields.Str(
+            required=True,
+        ),
+    }
+    @use_kwargs(args)
+    def post(self, id, room):
+        mongo.db.room.delete_one({"id" : id})
+        return mongo.db.room.find_one({"id" : id}) is None
 
 
 
@@ -134,4 +136,4 @@ api.add_resource(GetFullQuestion,'/getFullQuestion/')
 
 
 if __name__ == '__main__':
-	app.run(debug = True)
+    app.run(debug = True)
