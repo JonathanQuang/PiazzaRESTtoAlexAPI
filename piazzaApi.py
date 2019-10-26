@@ -56,6 +56,21 @@ class Search(Resource):
 	def get(self, query):
 		return jsonify(cs101.search_feed(query))
 
+class FirstQuestionId(Resource):
+    args = {'query': fields.Str(required = True)}
+    @use_kwargs(args)
+    def get(self, query):
+        returnDict = cs101.search_feed(query)
+        firstQuestion = returnDict[0]
+        return firstQuestion["id"]
+
+class GetFullQuestion(Resource):
+    args = {'query' : fields.Str(required = True)}
+    @use_kwargs(args)
+    def get(self, query):
+        id_str = cs101.search_feed(query)[0]["id"]
+        return cs101.get_post(id_str)["history"][0]["content"]
+
 class PiazzaPost(Resource):
     args = {'query' : fields.Str(required=True)}
     @use_kwargs(args)
@@ -99,6 +114,8 @@ api.add_resource(Search, '/search/')
 api.add_resource(PiazzaPost,'/piazzaPost/')
 api.add_resource(EnterRoom, '/enterRoom/')
 api.add_resource(ExitRoom, '/exitRoom/')
+api.add_resource(FirstQuestionId,'/firstQuestionId/')
+api.add_resource(GetFullQuestion,'/getFullQuestion/')
 
 
 if __name__ == '__main__':
