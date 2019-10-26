@@ -9,7 +9,7 @@ from flask_pymongo import PyMongo
 
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
+app.config["MONGO_URI"] = "mongodb+srv://aws-lambda:hackgt@cluster0-ibxqm.gcp.mongodb.net/test?retryWrites=true&w=majority"
 api = Api(app)
 mongo = PyMongo(app)
 
