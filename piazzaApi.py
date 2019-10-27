@@ -53,8 +53,8 @@ class Post(Resource):
         'description': fields.Str(
             required=True,
         ),
-        'id' : fields.Str(
-            required = True,
+        'id': fields.Str(
+            required=True,
         ),
     }
 
@@ -68,7 +68,7 @@ class Post(Resource):
         for p in posts:
             allPosts[index] = p
             index = index + 1
-        mydict = {"question" : question , "id" : id}
+        mydict = {"question": question, "id": id}
         mongo.db.question_id_map.insert_one(mydict)
         return jsonify(allPosts)
 
@@ -110,8 +110,10 @@ class GetFullQuestion(Resource):
         mongo.db.questions.insert_one({userID: id_str})
         return "Closest match found on Piazza was "+cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
 
+
 class GetAnswerToFullQuestion(Resource):
-    args = {'query' : fields.Str(required = True)} 
+    args = {'query': fields.Str(required=True)}
+
     @use_kwargs(args)
     def get(self, query):
         search_feed_result = cs101.search_feed(query)
@@ -123,8 +125,11 @@ class GetAnswerToFullQuestion(Resource):
             return "This question has no answers"
         return cleanhtml(child_history_array[0]["history"][0]["content"])
 
+
 class PostAnswerToFullQuestion(Resource):
-    args = {'query' : fields.Str(required = True), 'answer' : fields.Str(required=True)}
+    args = {'query': fields.Str(required=True),
+            'answer': fields.Str(required=True)}
+
     @use_kwargs(args)
     def post(self, query, answer):
         search_feed_result = cs101.search_feed(query)
@@ -133,7 +138,8 @@ class PostAnswerToFullQuestion(Resource):
         id_str = search_feed_result[0]["id"]
         post_obj = cs101.get_post(id_str)
         cs101.create_followup(post_obj, answer)
-        return "reply successfully posted"     
+        return "reply successfully posted"
+
 
 class PiazzaPost(Resource):
     args = {'query': fields.Str(required=True)}
@@ -193,7 +199,7 @@ class ExitRoom(Resource):
         else:
             mongo.db.room.delete_one({"id": id})
             mongo.db.id.delete_one({"room": {"$exists": True}})
-            return "You exited room " + str(room["room"])   
+            return "You exited room " + str(room["room"])
 
 
 class SendNotifications(Resource):
@@ -201,19 +207,21 @@ class SendNotifications(Resource):
         'dont_send_id': fields.Str(
             required=True,
         ),
+        'message': fields.Str(required=True,)
     }
+
     @use_kwargs(args)
-    def post(self, dont_send_id):
+    def post(self, dont_send_id, message):
         room = mongo.db.dont_send_id.find_one({"room": {"$exists": True}})
         dont_send_id = dont_send_id.replace(".", "")
         token = getToken()
-        cursor = mongo.db.room.find( {} )
+        cursor = mongo.db.room.find({})
         sendNotificationIDs = []
         for doc in cursor:
             tempDoc = doc["id"].replace(".", "")
             if not (doc["id"] == dont_send_id):
                 sendNotificationIDs.append(doc["id"])
-        sendNotification(token, "haha suck it", sendNotificationIDs)
+        sendNotification(token, message, sendNotificationIDs)
         return "Notifications Sent"
 
 
@@ -236,10 +244,13 @@ def getToken():
 
     return response.json()['access_token']
 
+
 ''''timestamp': str(datetime.datetime.now()),
             'referenceId': 'unique-id-of-this-event-instance-abc12345' + str(n),
             'expiryTime': str(datetime.datetime.now() + datetime.timedelta(days=1)),
             '''
+
+
 def sendNotification(token, message, userIds):
     url = BASE_AMAZON_URI + "proactiveEvents/stages/development"
     for userId in userIds:
