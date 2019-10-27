@@ -175,12 +175,12 @@ class EnterRoom(Resource):
     @use_kwargs(args)
     def post(self, id, room):
         id = id.replace(".", "")
-        if mongo.db.room.find_one({"id": id}) is None:
-            mongo.db.room.insert_one({"id": id})
-            mongo.db.id.insert_one({"room": room})
+        if mongo.db.id.find_one({id: {"$exists": True}}) is None:
+            mongo.db.room.insert_one({room: id})
+            mongo.db.id.insert_one({id: room})
             return "Added you to room " + room
         else:
-            return "You are already in room " + str(mongo.db.id.find_one({"room": {"$exists": True}})["room"])
+            return "You are already in room " + str(mongo.db.id.find_one({id : {"$exists": True}})[id])
 
 
 class ExitRoom(Resource):
@@ -193,13 +193,14 @@ class ExitRoom(Resource):
     @use_kwargs(args)
     def post(self, id):
         id = id.replace(".", "")
-        room = mongo.db.id.find_one({"room": {"$exists": True}})
-        if room is None or mongo.db.room.find_one({"id": id}) is None:
+        room = mongo.db.id.find_one({id : {"$exists": True}})[id]
+        if room is None:
             return "You are not in any room"
         else:
-            mongo.db.room.delete_one({"id": id})
-            mongo.db.id.delete_one({"room": {"$exists": True}})
-            return "You exited room " + str(room["room"])
+            print(room)
+            mongo.db.room.remove({room: id})
+            mongo.db.id.remove({id : {"$exists": True}})
+            return "You exited room " + str(room)
 
 
 class SendNotifications(Resource):
@@ -212,16 +213,17 @@ class SendNotifications(Resource):
 
     @use_kwargs(args)
     def post(self, dont_send_id, message):
-        room = mongo.db.dont_send_id.find_one({"room": {"$exists": True}})
+        room = mongo.db.id.find_one({dont_send_id: {"$exists": True}})[dont_send_id]
+        print("currObject room is " + str(room))
         dont_send_id = dont_send_id.replace(".", "")
         token = getToken()
-        cursor = mongo.db.room.find({})
+        cursor = mongo.db.room.find({room : {"$exists": True}})
         sendNotificationIDs = []
         for doc in cursor:
-            tempDoc = doc["id"].replace(".", "")
+            tempDoc = doc[room].replace(".", "")
             if not (tempDoc == dont_send_id):
                 print(tempDoc)
-                sendNotificationIDs.append(doc["id"])
+                sendNotificationIDs.append(doc[room])
         sendNotification(token, message, sendNotificationIDs)
         return "Notifications Sent"
 
