@@ -59,6 +59,7 @@ class Post(Resource):
 
     @use_kwargs(args)
     def post(self, question, description, id):
+        id = id.replace(".", "")
         cs101.create_post("question", ['polls'], question, description)
         allPosts = {}
         posts = cs101.iter_all_posts(limit=10)
@@ -99,6 +100,7 @@ class GetFullQuestion(Resource):
 
     @use_kwargs(args)
     def get(self, query, userID):
+        userID = userID.replace(".", "")
         if len(cs101.search_feed(query)) == 0:
             return "Couldn't find a matching question on Piazza"
         id_str = cs101.search_feed(query)[0]["id"]
@@ -134,6 +136,7 @@ class GetPiazzaAnswer(Resource):
 
     @use_kwargs(args)
     def get(self, userID):
+        userID = userID.replace(".", "")
         questionID = mongo.db.questions.find_one(
             {userID: {"$exists": True}})[userID]
         if len(cs101.get_post(questionID)["children"]) == 0:
@@ -153,6 +156,7 @@ class EnterRoom(Resource):
 
     @use_kwargs(args)
     def post(self, id, room):
+        id = id.replace(".", "")
         if mongo.db.room.find_one({"id": id}) is None:
             mongo.db.room.insert_one({"id": id})
             return "Added you into the room"
@@ -172,6 +176,7 @@ class ExitRoom(Resource):
 
     @use_kwargs(args)
     def post(self, id, room):
+        id = id.replace(".", "")
         if mongo.db.room.find_one({"id": id}) is None:
             return "You are not in this room"
         else:
@@ -190,6 +195,7 @@ class SendNotifications(Resource):
     }
     @use_kwargs(args)
     def post(self, dont_send_id, room):
+        dont_send_id = dont_send_id.replace(".", "")
         token = getToken()
         cursor = mongo.db.room.find( {} )
         sendNotificationIDs = []
