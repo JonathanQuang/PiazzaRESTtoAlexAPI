@@ -58,7 +58,7 @@ class Post(Resource):
     }
 
     @use_kwargs(args)
-    def post(self, question, description):
+    def post(self, question, description, id):
         cs101.create_post("question", ['polls'], question, description)
         allPosts = {}
         posts = cs101.iter_all_posts(limit=10)
