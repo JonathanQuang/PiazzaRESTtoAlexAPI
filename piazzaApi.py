@@ -172,9 +172,9 @@ class EnterRoom(Resource):
         if mongo.db.room.find_one({"id": id}) is None:
             mongo.db.room.insert_one({"id": id})
             mongo.db.id.insert_one({"room": room})
-            return "Added you to the room " + room
+            return "Added you to room " + room
         else:
-            return "You are already in the room " + str(mongo.db.id.find_one({"room": {"$exists": True}})["room"])
+            return "You are already in room " + str(mongo.db.id.find_one({"room": {"$exists": True}})["room"])
 
 
 class ExitRoom(Resource):
