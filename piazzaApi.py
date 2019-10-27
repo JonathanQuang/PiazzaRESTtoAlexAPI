@@ -123,6 +123,18 @@ class GetAnswerToFullQuestion(Resource):
             return "This question has no answers"
         return cleanhtml(child_history_array[0]["history"][0]["content"])
 
+class PostAnswerToFullQuestion(Resource):
+    args = {'query' : fields.Str(required = True), 'answer' : fields.Str(required=True)}
+    @use_kwargs(args)
+    def post(self, query, answer):
+        search_feed_result = cs101.search_feed(query)
+        if len(cs101.search_feed(query)) == 0:
+            return "Couldn't find a matching questions on Piazza"
+        id_str = search_feed_result[0]["id"]
+        post_obj = cs101.get_post(id_str)
+        cs101.create_followup(post_obj, answer)
+        return "reply successfully posted"     
+
 class PiazzaPost(Resource):
     args = {'query': fields.Str(required=True)}
 
@@ -272,5 +284,7 @@ api.add_resource(ExitRoom, '/exitRoom/')
 api.add_resource(FirstQuestionId, '/firstQuestionId/')
 api.add_resource(GetFullQuestion, '/getFullQuestion/')
 api.add_resource(SendNotifications, '/notify/')
+api.add_resource(PostAnswerToFullQuestion, '/postAnswerToFullQuestion/')
+
 if __name__ == '__main__':
     app.run(debug=True)
