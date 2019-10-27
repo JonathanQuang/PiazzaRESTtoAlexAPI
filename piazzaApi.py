@@ -155,8 +155,9 @@ class GetPiazzaAnswer(Resource):
     @use_kwargs(args)
     def get(self, userID):
         userID = userID.replace(".", "")
-        questionID = mongo.db.questions.find_one(
-            {userID: {"$exists": True}})[userID]
+        if mongo.db.questions.find_one({userID: {"$exists": True}}) is None:
+            return "You haven't asked any questions yet"
+        questionID = mongo.db.questions.find_one({userID: {"$exists": True}})[userID]
         if len(cs101.get_post(questionID)["children"]) == 0:
             return "There is no answer for this question on Piazza"
         return cleanhtml(cs101.get_post(questionID)["children"][0]["history"][0]["content"])
@@ -213,6 +214,7 @@ class SendNotifications(Resource):
 
     @use_kwargs(args)
     def post(self, dont_send_id, message):
+        dont_send_id = dont_send_id.replace(".", "")
         room = mongo.db.id.find_one({dont_send_id: {"$exists": True}})[dont_send_id]
         print("currObject room is " + str(room))
         dont_send_id = dont_send_id.replace(".", "")
