@@ -219,7 +219,7 @@ class SendNotifications(Resource):
         sendNotificationIDs = []
         for doc in cursor:
             tempDoc = doc["id"].replace(".", "")
-            if not (doc["id"] == dont_send_id):
+            if not (tempDoc == dont_send_id):
                 sendNotificationIDs.append(doc["id"])
         sendNotification(token, message, sendNotificationIDs)
         return "Notifications Sent"
