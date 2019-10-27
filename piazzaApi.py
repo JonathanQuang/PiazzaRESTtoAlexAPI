@@ -10,6 +10,7 @@ import re
 import requests
 import json
 import random
+import datetime
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb+srv://aws-lambda:hackgt@cluster0-ibxqm.gcp.mongodb.net/test?retryWrites=true&w=majority"
@@ -105,7 +106,6 @@ class GetFullQuestion(Resource):
             return "Couldn't find a matching question on Piazza"
         id_str = cs101.search_feed(query)[0]["id"]
         if mongo.db.questions.find_one({userID: {"$exists": True}}) is not None:
-            print(mongo.db.questions.find_one({userID: {"$exists": True}}))
             mongo.db.questions.delete_one({userID: {"$exists": True}})
         mongo.db.questions.insert_one({userID: id_str})
         return cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
@@ -159,9 +159,10 @@ class EnterRoom(Resource):
         id = id.replace(".", "")
         if mongo.db.room.find_one({"id": id}) is None:
             mongo.db.room.insert_one({"id": id})
-            return "Added you into the room"
+            mongo.db.id.insert_one({"room": room})
+            return "Added you to the room " + room
         else:
-            return "You are already in the room"
+            return "You are already in the room " + str(mongo.db.id.find_one({"room": {"$exists": True}})["room"])
 
 
 class ExitRoom(Resource):
@@ -169,19 +170,18 @@ class ExitRoom(Resource):
         'id': fields.Str(
             required=True,
         ),
-        'room': fields.Str(
-            required=True,
-        ),
     }
 
     @use_kwargs(args)
-    def post(self, id, room):
+    def post(self, id):
         id = id.replace(".", "")
-        if mongo.db.room.find_one({"id": id}) is None:
-            return "You are not in this room"
+        room = mongo.db.id.find_one({"room": {"$exists": True}})
+        if room is None or mongo.db.room.find_one({"id": id}) is None:
+            return "You are not in any room"
         else:
             mongo.db.room.delete_one({"id": id})
-            return "Removed you from the room"
+            mongo.db.id.delete_one({"room": {"$exists": True}})
+            return "You exited room " + str(room["room"])   
 
 
 class SendNotifications(Resource):
@@ -189,17 +189,16 @@ class SendNotifications(Resource):
         'dont_send_id': fields.Str(
             required=True,
         ),
-        'room': fields.Str(
-            required=True,
-        ),
     }
     @use_kwargs(args)
-    def post(self, dont_send_id, room):
+    def post(self, dont_send_id):
+        room = mongo.db.dont_send_id.find_one({"room": {"$exists": True}})
         dont_send_id = dont_send_id.replace(".", "")
         token = getToken()
         cursor = mongo.db.room.find( {} )
         sendNotificationIDs = []
         for doc in cursor:
+            tempDoc = doc["id"].replace(".", "")
             if not (doc["id"] == dont_send_id):
                 sendNotificationIDs.append(doc["id"])
         sendNotification(token, "haha suck it", sendNotificationIDs)
@@ -225,15 +224,18 @@ def getToken():
 
     return response.json()['access_token']
 
-
+''''timestamp': str(datetime.datetime.now()),
+            'referenceId': 'unique-id-of-this-event-instance-abc12345' + str(n),
+            'expiryTime': str(datetime.datetime.now() + datetime.timedelta(days=1)),
+            '''
 def sendNotification(token, message, userIds):
     url = BASE_AMAZON_URI + "proactiveEvents/stages/development"
     for userId in userIds:
         n = random.randint(0, 1000)
         Data = {
-            'timestamp': '2019-06-08T10:12:01.00Z',
+            'timestamp': str(datetime.datetime.now().isoformat(timespec='seconds')),
             'referenceId': 'unique-id-of-this-event-instance-abc12345' + str(n),
-            'expiryTime': '2019-10-26T22:00:00.00Z',
+            'expiryTime': str((datetime.datetime.now() + datetime.timedelta(days=1)).isoformat(timespec='seconds')),
 
             'event': {
                 'name': 'AMAZON.MessageAlert.Activated',
@@ -258,7 +260,7 @@ def sendNotification(token, message, userIds):
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
         }, data=json.dumps(Data))
-        print(r.status_code)
+        # print("send notification code = " + r.text)
 
 
 api.add_resource(Post, '/post/')
