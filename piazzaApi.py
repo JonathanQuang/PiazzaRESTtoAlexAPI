@@ -175,9 +175,10 @@ class EnterRoom(Resource):
 
     @use_kwargs(args)
     def post(self, id, room):
+        origId = id
         id = id.replace(".", "")
         if mongo.db.id.find_one({id: {"$exists": True}}) is None:
-            mongo.db.room.insert_one({room: id})
+            mongo.db.room.insert_one({room: origId})
             mongo.db.id.insert_one({id: room})
             return "Added you to room " + room
         else:
@@ -193,13 +194,13 @@ class ExitRoom(Resource):
 
     @use_kwargs(args)
     def post(self, id):
+        origId = id
         id = id.replace(".", "")
         room = mongo.db.id.find_one({id : {"$exists": True}})[id]
         if room is None:
             return "You are not in any room"
         else:
-            print(room)
-            mongo.db.room.remove({room: id})
+            mongo.db.room.remove({room: origId})
             mongo.db.id.remove({id : {"$exists": True}})
             return "You exited room " + str(room)
 
@@ -222,10 +223,12 @@ class SendNotifications(Resource):
         cursor = mongo.db.room.find({room : {"$exists": True}})
         sendNotificationIDs = []
         for doc in cursor:
-            tempDoc = doc[room].replace(".", "")
+            tempDoc = doc[room]
+            tempDoc = tempDoc.replace(".","")
+            print(doc[room])
             if not (tempDoc == dont_send_id):
-                print(tempDoc)
                 sendNotificationIDs.append(doc[room])
+        print(sendNotificationIDs)
         sendNotification(token, message, sendNotificationIDs)
         return "Notifications Sent"
 
@@ -288,7 +291,7 @@ def sendNotification(token, message, userIds):
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
         }, data=json.dumps(Data))
-        # print("send notification code = " + r.text)
+        print("send notification code = " + r.text)
 
 
 api.add_resource(Post, '/post/')
