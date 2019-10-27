@@ -271,7 +271,7 @@ def sendNotification(token, message, userIds):
                         'creator': {
                             'name': message
                         },
-                        'count': 5,
+                        'count': 1,
                         'urgency': 'URGENT'
                     }
                 }
