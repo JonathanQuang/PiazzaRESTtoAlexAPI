@@ -61,7 +61,7 @@ class Post(Resource):
     @use_kwargs(args)
     def post(self, question, description, id):
         id = id.replace(".", "")
-        cs101.create_post("question", ['polls'], question, description)
+        cs101.create_post("question", ['polls'], question+" ?", description)
         allPosts = {}
         posts = cs101.iter_all_posts(limit=10)
         index = 0
@@ -108,7 +108,7 @@ class GetFullQuestion(Resource):
         if mongo.db.questions.find_one({userID: {"$exists": True}}) is not None:
             mongo.db.questions.delete_one({userID: {"$exists": True}})
         mongo.db.questions.insert_one({userID: id_str})
-        return cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
+        return "Closest match found on Piazza was "+cleanhtml(cs101.get_post(id_str)["history"][0]["content"])
 
 class GetAnswerToFullQuestion(Resource):
     args = {'query' : fields.Str(required = True)} 
